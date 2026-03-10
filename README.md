@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StickStack
 
-## Getting Started
+StickStack は、棒ミノ（I ミノ）だけが落ちてくる、変則ルールのレトロ風落ち物パズルです。
 
-First, run the development server:
+普通のテトリスと違って出現するミノは 1 種類だけ。いかにも簡単そうに見えますが、棒しか来ないせいで逆に地形調整が難しく、妙な緊張感があります。
+
+## 特徴
+
+- 棒ミノだけが落下
+- レトロゲーム機っぽい配色と UI
+- キーボード操作に対応
+- ハードドロップ機能あり
+- ライン消去、スコア、レベル表示あり
+
+## アプリ名について
+
+GitHub で見かけても違和感が少ない、短めで覚えやすい名前として StickStack を採用しています。
+
+- stick = 棒ミノ
+- stack = 積み上がるブロック
+
+意味がそのまま伝わりやすく、リポジトリ名にも向いています。
+
+## 操作方法
+
+### キーボード
+
+- ← : 左へ移動
+- → : 右へ移動
+- ↑ : 回転
+- ↓ : 1 マス落下
+- Space : ハードドロップ
+- P : 一時停止
+- R : リセット
+
+### 画面上のボタン
+
+画面右側のコントロールパネルからも操作できます。
+
+## 実行方法
+
+### 1. 依存パッケージをインストール
+
+```bash
+npm install
+```
+
+### 2. 開発サーバーを起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで `http://localhost:3000` を開くとゲームが表示されます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## スコア仕様
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 通常落下: +10
+- ライン消去: 1 ラインにつき +150
+- 10 ライン消すごとにレベルアップ
+- レベルが上がると落下速度が上昇
 
-## Learn More
+## アイデアの出典
 
-To learn more about Next.js, take a look at the following resources:
+このアプリは、Threads の [@yukishiro_byakuya](https://www.threads.com/@yukishiro_byakuya/post/DVshsQPicmd) による次の投稿からインスピレーションを得ています。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> 棒？だけが落ちてくる、テトリスのアプリがあったはずなんだけど、誰か知りませんか？思いつく限りのワードも入れて探してるんですが、出てこんのですよ。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+「そのアプリ、自分で作れば？」という発想から StickStack が生まれました。
 
-## Deploy on Vercel
+## ひとこと
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+棒しか落ちてこないのに、妙に落ち着かない。
+それが StickStack です。
