@@ -60,6 +60,29 @@ npm run dev
 - 10 ライン消すごとにレベルアップ
 - レベルが上がると落下速度が上昇
 
+## ディレクトリ構成
+
+```
+.
+├── app/
+│   ├── globals.css        # グローバルスタイル
+│   ├── layout.tsx         # ルートレイアウト
+│   └── page.tsx           # エントリーポイント
+├── components/
+│   ├── ui/
+│   │   ├── badge.tsx      # shadcn/ui Badge
+│   │   ├── button.tsx     # shadcn/ui Button
+│   │   └── card.tsx       # shadcn/ui Card
+│   ├── StickStack.tsx     # ゲーム本体
+│   └── StickStackLoader.tsx  # SSR無効化用ラッパー
+├── lib/
+│   └── utils.ts           # ユーティリティ関数
+├── public/                # 静的ファイル
+├── components.json        # shadcn/ui 設定
+├── next.config.ts         # Next.js 設定
+└── package.json
+```
+
 ## アイデアの出典
 
 このアプリは、Threads の [@yukishiro_byakuya](https://www.threads.com/@yukishiro_byakuya/post/DVshsQPicmd) による次の投稿からインスピレーションを得ています。
