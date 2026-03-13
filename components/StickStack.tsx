@@ -318,11 +318,30 @@ export default function StickStack() {
       nextY += 1;
     }
 
-    setPiece((prevPiece) => (prevPiece ? { ...prevPiece, y: nextY } : prevPiece));
-    setTimeout(() => {
-      lockPiece();
-    }, 0);
-  }, [board, gameOver, lockPiece, piece]);
+    const droppedPiece = { ...piece, y: nextY };
+
+    setBoard((prevBoard) => {
+      const mergedBoard = merge(prevBoard, droppedPiece);
+      const { board: clearedBoard, cleared } = clearLines(mergedBoard);
+
+      if (cleared > 0) {
+        setLines((prevLines) => prevLines + cleared);
+        setScore((prevScore) => prevScore + cleared * 150);
+      } else {
+        setScore((prevScore) => prevScore + 10);
+      }
+
+      const nextPiece = randomPiece();
+      if (collides(clearedBoard, nextPiece)) {
+        setGameOver(true);
+        setRunning(false);
+      } else {
+        setPiece(nextPiece);
+      }
+
+      return clearedBoard;
+    });
+  }, [board, gameOver, piece]);
 
   const rotatePiece = useCallback(() => {
     if (!piece || gameOver) return;
