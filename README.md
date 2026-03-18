@@ -42,7 +42,7 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:3000` を開くとゲームが表示されます。
+ブラウザで `http://localhost:3000/stick-stack` を開くとゲームが表示されます。
 
 ## スコア仕様
 
