@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pause, Play, RefreshCcw, RotateCw } from "lucide-react";
+import { Pause, Play, RefreshCcw, RotateCw, Volume2, VolumeX } from "lucide-react";
 import {
   COLS,
   ROWS,
@@ -87,6 +87,9 @@ export default function StickStack() {
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [muted, setMuted] = useState(false);
+  const shouldPlayRef = useRef(true);
 
   const level = getLevel(lines);
   const tickMs = getTickMs(level);
@@ -214,6 +217,42 @@ export default function StickStack() {
   }, [handleKeyDown]);
 
   useEffect(() => {
+    audioRef.current = new Audio("/stick-stack/bgm/theme.mp3");
+    audioRef.current.loop = true;
+
+    // 最初のユーザー操作で再生を開始する（オートプレイ制限の回避）
+    const tryPlay = () => {
+      if (shouldPlayRef.current && audioRef.current) {
+        audioRef.current.play().catch(() => {});
+      }
+    };
+    document.addEventListener("keydown", tryPlay, { once: true });
+    document.addEventListener("click", tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener("keydown", tryPlay);
+      document.removeEventListener("click", tryPlay);
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    shouldPlayRef.current = running && !gameOver;
+    if (!audioRef.current) return;
+    if (running && !gameOver) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [running, gameOver]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.muted = muted;
+  }, [muted]);
+
+  useEffect(() => {
     if (!running || gameOver) {
       if (tickRef.current) {
         clearInterval(tickRef.current);
@@ -316,6 +355,10 @@ export default function StickStack() {
               </Button>
               <Button className="col-span-2 rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={hardDrop}>
                 HARD DROP
+              </Button>
+              <Button className="col-span-2 rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={() => setMuted((m) => !m)}>
+                {muted ? <VolumeX className="mr-2 h-4 w-4" /> : <Volume2 className="mr-2 h-4 w-4" />}
+                {muted ? "UNMUTE" : "MUTE"}
               </Button>
             </CardContent>
           </Card>

@@ -82,6 +82,13 @@ npm run dev
 
 「そのアプリ、自分で作れば？」という発想から StickStack が生まれました。
 
+## 音楽クレジット
+
+- **コロベイニキ**（テトリスのテーマ）
+  - 編曲・演奏：Pracchia-78
+  - 出典：[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nikolaj_Alekseevi%C4%8D_Nekrasov_-_Korobeiniki.ogg)
+  - ライセンス：パブリックドメイン
+
 ## ひとこと
 
 棒しか落ちてこないのに、妙に落ち着かない。
