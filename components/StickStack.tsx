@@ -23,6 +23,24 @@ import {
   getTickMs,
 } from "@/lib/game";
 
+function playGameOverSound() {
+  const ctx = new AudioContext();
+  const notes = [329.63, 261.63, 220.0, 164.81];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "square";
+    osc.frequency.value = freq;
+    const start = ctx.currentTime + i * 0.18;
+    gain.gain.setValueAtTime(0.3, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+    osc.start(start);
+    osc.stop(start + 0.15);
+  });
+}
+
 /**
  * レトロ風の盤面を描画するコンポーネント。
  */
@@ -251,6 +269,10 @@ export default function StickStack() {
     if (!audioRef.current) return;
     audioRef.current.muted = muted;
   }, [muted]);
+
+  useEffect(() => {
+    if (gameOver) playGameOverSound();
+  }, [gameOver]);
 
   useEffect(() => {
     if (!running || gameOver) {
