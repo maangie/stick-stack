@@ -126,23 +126,22 @@ export default function StickStack() {
 
     setBoard((prevBoard) => {
       const mergedBoard = merge(prevBoard, piece);
-      const { board: clearedBoard, cleared } = clearLines(mergedBoard);
 
+      // Block out: 最上行でロックされたらゲームオーバー
+      if (piece.y === 0) {
+        setGameOver(true);
+        setRunning(false);
+        return mergedBoard;
+      }
+
+      const { board: clearedBoard, cleared } = clearLines(mergedBoard);
       if (cleared > 0) {
         setLines((prevLines) => prevLines + cleared);
         setScore((prevScore) => prevScore + cleared * 150);
       } else {
         setScore((prevScore) => prevScore + 10);
       }
-
-      const nextPiece = randomPiece();
-      if (collides(clearedBoard, nextPiece)) {
-        setGameOver(true);
-        setRunning(false);
-      } else {
-        setPiece(nextPiece);
-      }
-
+      setPiece(randomPiece());
       return clearedBoard;
     });
   }, [piece]);
@@ -181,23 +180,22 @@ export default function StickStack() {
 
     setBoard((prevBoard) => {
       const mergedBoard = merge(prevBoard, droppedPiece);
-      const { board: clearedBoard, cleared } = clearLines(mergedBoard);
 
+      // Block out: 最上行でロックされたらゲームオーバー
+      if (droppedPiece.y === 0) {
+        setGameOver(true);
+        setRunning(false);
+        return mergedBoard;
+      }
+
+      const { board: clearedBoard, cleared } = clearLines(mergedBoard);
       if (cleared > 0) {
         setLines((prevLines) => prevLines + cleared);
         setScore((prevScore) => prevScore + cleared * 150);
       } else {
         setScore((prevScore) => prevScore + 10);
       }
-
-      const nextPiece = randomPiece();
-      if (collides(clearedBoard, nextPiece)) {
-        setGameOver(true);
-        setRunning(false);
-      } else {
-        setPiece(nextPiece);
-      }
-
+      setPiece(randomPiece());
       return clearedBoard;
     });
   }, [board, gameOver, piece]);
