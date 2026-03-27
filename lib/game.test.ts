@@ -177,7 +177,7 @@ describe("getTickMs", () => {
     expect(getTickMs(2)).toBeLessThan(getTickMs(1));
   });
 
-  it("最低値 120ms を下回らない", () => {
-    expect(getTickMs(100)).toBe(120);
+  it("最低値 10ms を下回らない", () => {
+    expect(getTickMs(100)).toBe(10);
   });
 });

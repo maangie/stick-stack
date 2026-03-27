@@ -167,5 +167,5 @@ export function getLevel(lines: number) {
  * レベルに応じた落下速度を算出する。
  */
 export function getTickMs(level: number) {
-  return Math.max(120, INITIAL_TICK_MS - (level - 1) * 40);
+  return Math.max(10, INITIAL_TICK_MS - (level - 1) * 51);
 }
