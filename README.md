@@ -44,6 +44,32 @@ npm run dev
 
 ブラウザで `http://localhost:3000/stick-stack` を開くとゲームが表示されます。
 
+## テスト
+
+### テストの実行
+
+```bash
+npm test
+```
+
+テストを一度だけ実行して結果を表示します。
+
+### ウォッチモードで実行
+
+```bash
+npm run test:watch
+```
+
+ファイルの変更を監視し、変更があるたびに自動でテストを再実行します。
+
+### テスト構成
+
+- **テストフレームワーク**: [Vitest](https://vitest.dev/)（jsdom 環境）
+- **UI テスト**: [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+- **テストファイルの配置**:
+  - `lib/*.test.ts` — ゲームロジックの単体テスト
+  - `components/__tests__/*.test.tsx` — React コンポーネントのテスト
+
 ## スコア仕様
 
 - 通常落下: +10
