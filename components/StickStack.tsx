@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pause, Play, RefreshCcw, RotateCw, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, RefreshCcw, RotateCw, Volume1, Volume2, VolumeX } from "lucide-react";
 import NextPiece from "@/components/NextPiece";
 import {
   COLS,
@@ -24,7 +24,13 @@ import {
   getTickMs,
 } from "@/lib/game";
 
-function playLineClearSound() {
+/** ボリューム 0〓3 を実際のゲイン値 (0.0〓1.0) に変換するテーブル */
+const VOLUME_GAINS: Record<number, number> = { 0: 0, 1: 0.33, 2: 0.66, 3: 1.0 };
+
+function playLineClearSound(volumeLevel: number) {
+  const gain0 = VOLUME_GAINS[volumeLevel] ?? 0;
+  if (gain0 === 0) return;
+
   const ctx = new AudioContext();
   const notes = [523.25, 1046.5]; // C5 → C6
   notes.forEach((freq, i) => {
@@ -35,14 +41,17 @@ function playLineClearSound() {
     osc.type = "square";
     osc.frequency.value = freq;
     const start = ctx.currentTime + i * 0.08;
-    gain.gain.setValueAtTime(0.25, start);
+    gain.gain.setValueAtTime(0.25 * gain0, start);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.12);
     osc.start(start);
     osc.stop(start + 0.12);
   });
 }
 
-function playGameOverSound() {
+function playGameOverSound(volumeLevel: number) {
+  const gain0 = VOLUME_GAINS[volumeLevel] ?? 0;
+  if (gain0 === 0) return;
+
   const ctx = new AudioContext();
   const notes = [329.63, 261.63, 220.0, 164.81];
   notes.forEach((freq, i) => {
@@ -53,11 +62,18 @@ function playGameOverSound() {
     osc.type = "square";
     osc.frequency.value = freq;
     const start = ctx.currentTime + i * 0.18;
-    gain.gain.setValueAtTime(0.3, start);
+    gain.gain.setValueAtTime(0.3 * gain0, start);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
     osc.start(start);
     osc.stop(start + 0.15);
   });
+}
+
+/** ボリュームレベルに応じたアイコンを返す */
+function VolumeIcon({ level }: { level: number }) {
+  if (level === 0) return <VolumeX className="mr-2 h-4 w-4" />;
+  if (level <= 2) return <Volume1 className="mr-2 h-4 w-4" />;
+  return <Volume2 className="mr-2 h-4 w-4" />;
 }
 
 /**
@@ -125,11 +141,21 @@ export default function StickStack() {
   const [lines, setLines] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(3);
+  const volumeRef = useRef(3);
   const shouldPlayRef = useRef(true);
 
   const level = getLevel(lines);
   const tickMs = getTickMs(level);
+
+  // volumeRef を常に最新に保つ（コールバックから参照用）
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
+
+  const cycleVolume = useCallback(() => {
+    setVolume((prev) => (prev + 1) % 4);
+  }, []);
 
   const resetGame = useCallback(() => {
     setBoard(createBoard());
@@ -155,7 +181,7 @@ export default function StickStack() {
 
       const { board: clearedBoard, cleared } = clearLines(mergedBoard);
       if (cleared > 0) {
-        playLineClearSound();
+        playLineClearSound(volumeRef.current);
         setLines((prevLines) => prevLines + cleared);
         setScore((prevScore) => prevScore + cleared * 150);
       } else {
@@ -210,7 +236,7 @@ export default function StickStack() {
 
       const { board: clearedBoard, cleared } = clearLines(mergedBoard);
       if (cleared > 0) {
-        playLineClearSound();
+        playLineClearSound(volumeRef.current);
         setLines((prevLines) => prevLines + cleared);
         setScore((prevScore) => prevScore + cleared * 150);
       } else {
@@ -284,13 +310,14 @@ export default function StickStack() {
     }
   }, [running, gameOver]);
 
+  // BGM の音量をボリュームレベルに同期
   useEffect(() => {
     if (!audioRef.current) return;
-    audioRef.current.muted = muted;
-  }, [muted]);
+    audioRef.current.volume = VOLUME_GAINS[volume] ?? 0;
+  }, [volume]);
 
   useEffect(() => {
-    if (gameOver) playGameOverSound();
+    if (gameOver) playGameOverSound(volumeRef.current);
   }, [gameOver]);
 
   useEffect(() => {
@@ -401,9 +428,9 @@ export default function StickStack() {
               <Button className="col-span-2 rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={hardDrop}>
                 HARD DROP
               </Button>
-              <Button className="col-span-2 rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={() => setMuted((m) => !m)}>
-                {muted ? <VolumeX className="mr-2 h-4 w-4" /> : <Volume2 className="mr-2 h-4 w-4" />}
-                {muted ? "UNMUTE" : "MUTE"}
+              <Button className="col-span-2 rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={cycleVolume}>
+                <VolumeIcon level={volume} />
+                VOL {volume}
               </Button>
             </CardContent>
           </Card>
