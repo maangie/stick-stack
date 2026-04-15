@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pause, Play, RefreshCcw, RotateCw, Volume2, VolumeX } from "lucide-react";
+import NextPiece from "@/components/NextPiece";
 import {
   COLS,
   ROWS,
@@ -341,31 +342,35 @@ export default function StickStack() {
         </Card>
 
         <div className="space-y-6">
-          <Card className="rounded-[2rem] border-4 border-[#ffcf6a] bg-[#2a1d45] shadow-[0_0_0_4px_#5d448a,0_16px_40px_rgba(0,0,0,0.5)]">
-            <CardHeader>
-              <CardTitle className="font-mono text-xl tracking-wide text-[#ffe9a3]">STATUS</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 font-mono text-sm">
-              <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
-                <span className="text-[#bca9df]">SCORE</span>
-                <span className="text-lg font-bold text-[#fff2b6]">{score}</span>
-              </div>
-              <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
-                <span className="text-[#bca9df]">LINES</span>
-                <span className="text-lg font-bold text-[#fff2b6]">{lines}</span>
-              </div>
-              <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
-                <span className="text-[#bca9df]">LEVEL</span>
-                <span className="text-lg font-bold text-[#fff2b6]">{level}</span>
-              </div>
-              <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
-                <span className="text-[#bca9df]">STATE</span>
-                <span className="text-lg font-bold text-[#fff2b6]">
-                  {gameOver ? "OVER" : running ? "PLAY" : "PAUSE"}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-[1fr_1fr] gap-6">
+            <Card className="rounded-[2rem] border-4 border-[#ffcf6a] bg-[#2a1d45] shadow-[0_0_0_4px_#5d448a,0_16px_40px_rgba(0,0,0,0.5)]">
+              <CardHeader>
+                <CardTitle className="font-mono text-xl tracking-wide text-[#ffe9a3]">STATUS</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 font-mono text-sm">
+                <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
+                  <span className="text-[#bca9df]">SCORE</span>
+                  <span className="text-lg font-bold text-[#fff2b6]">{score}</span>
+                </div>
+                <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
+                  <span className="text-[#bca9df]">LINES</span>
+                  <span className="text-lg font-bold text-[#fff2b6]">{lines}</span>
+                </div>
+                <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
+                  <span className="text-[#bca9df]">LEVEL</span>
+                  <span className="text-lg font-bold text-[#fff2b6]">{level}</span>
+                </div>
+                <div className="flex items-center justify-between border-2 border-[#7d5bb3] bg-[#1d1530] p-3">
+                  <span className="text-[#bca9df]">STATE</span>
+                  <span className="text-lg font-bold text-[#fff2b6]">
+                    {gameOver ? "OVER" : running ? "PLAY" : "PAUSE"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <NextPiece />
+          </div>
 
           <Card className="rounded-[2rem] border-4 border-[#ffcf6a] bg-[#2a1d45] shadow-[0_0_0_4px_#5d448a,0_16px_40px_rgba(0,0,0,0.5)]">
             <CardHeader>
