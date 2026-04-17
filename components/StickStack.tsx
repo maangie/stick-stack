@@ -9,7 +9,6 @@ import NextPiece from "@/components/NextPiece";
 import {
   COLS,
   ROWS,
-  EMPTY,
   FILLED,
   ACTIVE,
   type Piece,
@@ -79,7 +78,19 @@ function VolumeIcon({ level }: { level: number }) {
 /**
  * レトロ風の盤面を描画するコンポーネント。
  */
-function BoardView({ board, piece }: { board: number[][]; piece: Piece | null }) {
+function BoardView({
+  board,
+  piece,
+  boardRef,
+  onTouchStart,
+  onTouchEnd,
+}: {
+  board: number[][];
+  piece: Piece | null;
+  boardRef: React.RefObject<HTMLDivElement | null>;
+  onTouchStart: React.TouchEventHandler<HTMLDivElement>;
+  onTouchEnd: React.TouchEventHandler<HTMLDivElement>;
+}) {
   const displayBoard = useMemo(() => {
     const next = cloneBoard(board);
 
@@ -102,7 +113,12 @@ function BoardView({ board, piece }: { board: number[][]; piece: Piece | null })
   }, [board, piece]);
 
   return (
-    <div className="rounded-[1.75rem] border-4 border-amber-200 bg-[#1a1230] p-3 shadow-[0_0_0_4px_#3a275f,0_18px_50px_rgba(0,0,0,0.45)]">
+    <div
+      ref={boardRef}
+      className="rounded-[1.75rem] border-4 border-amber-200 bg-[#1a1230] p-3 shadow-[0_0_0_4px_#3a275f,0_18px_50px_rgba(0,0,0,0.45)]"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div
         className="grid gap-0 rounded-xl border-4 border-[#4e357c] bg-[#120b22] p-2"
         style={{ gridTemplateColumns: `repeat(${COLS}, 2rem)` }}
@@ -140,6 +156,11 @@ export default function StickStack() {
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const moveRepeatDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const moveRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const moveRef = useRef<(dx: number) => void>(() => {});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(3);
   const volumeRef = useRef(3);
@@ -214,6 +235,10 @@ export default function StickStack() {
     [board, gameOver, piece]
   );
 
+  useEffect(() => {
+    moveRef.current = move;
+  }, [move]);
+
   const hardDrop = useCallback(() => {
     if (!piece || gameOver) return;
 
@@ -257,6 +282,77 @@ export default function StickStack() {
     setRunning((prevRunning) => !prevRunning);
   }, [gameOver]);
 
+  const handleTouchStart = useCallback<React.TouchEventHandler<HTMLDivElement>>((event) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback<React.TouchEventHandler<HTMLDivElement>>(
+    (event) => {
+      if (!running || gameOver) {
+        touchStartRef.current = null;
+        return;
+      }
+
+      const touchStart = touchStartRef.current;
+      const touch = event.changedTouches[0];
+      touchStartRef.current = null;
+
+      if (!touchStart || !touch) return;
+
+      const dx = touch.clientX - touchStart.x;
+      const dy = touch.clientY - touchStart.y;
+
+      if (dx < -30) {
+        move(-1);
+        return;
+      }
+      if (dx > 30) {
+        move(1);
+        return;
+      }
+      if (dy < -30) {
+        rotatePiece();
+        return;
+      }
+      if (dy > 30) {
+        stepDown();
+        return;
+      }
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+        hardDrop();
+      }
+    },
+    [gameOver, hardDrop, move, rotatePiece, running, stepDown]
+  );
+
+  const stopMoveRepeat = useCallback(() => {
+    if (moveRepeatDelayRef.current) {
+      clearTimeout(moveRepeatDelayRef.current);
+      moveRepeatDelayRef.current = null;
+    }
+    if (moveRepeatIntervalRef.current) {
+      clearInterval(moveRepeatIntervalRef.current);
+      moveRepeatIntervalRef.current = null;
+    }
+  }, []);
+
+  const startMoveRepeat = useCallback(
+    (dx: number) => {
+      stopMoveRepeat();
+      move(dx);
+
+      moveRepeatDelayRef.current = setTimeout(() => {
+        moveRepeatIntervalRef.current = setInterval(() => {
+          moveRef.current(dx);
+        }, 80);
+      }, 200);
+    },
+    [move, stopMoveRepeat]
+  );
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " "].includes(event.key)) {
@@ -278,6 +374,26 @@ export default function StickStack() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) return;
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (running && !gameOver) {
+        event.preventDefault();
+      }
+    };
+
+    board.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => {
+      board.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [gameOver, running]);
+
+  useEffect(() => {
+    return () => stopMoveRepeat();
+  }, [stopMoveRepeat]);
 
   useEffect(() => {
     audioRef.current = new Audio("/stick-stack/bgm/theme.mp3");
@@ -358,7 +474,13 @@ export default function StickStack() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-center">
-              <BoardView board={board} piece={gameOver ? null : piece} />
+              <BoardView
+                board={board}
+                piece={gameOver ? null : piece}
+                boardRef={boardRef}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              />
             </div>
             {gameOver && (
               <div className="mt-4 rounded-2xl border-4 border-[#ff9f7c] bg-[#5b2131] p-4 font-mono text-[#ffd9c8]">
@@ -404,31 +526,43 @@ export default function StickStack() {
               <CardTitle className="font-mono text-xl tracking-wide text-[#ffe9a3]">CONTROL</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3">
-              <Button className="rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={toggleRunning}>
+              <Button className="h-auto rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] py-3 font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={toggleRunning}>
                 {running ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
                 {running ? "PAUSE" : "PLAY"}
               </Button>
-              <Button className="rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={resetGame}>
+              <Button className="h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={resetGame}>
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 RESET
               </Button>
-              <Button className="rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={() => move(-1)}>
+              <Button
+                className="h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]"
+                onPointerDown={() => startMoveRepeat(-1)}
+                onPointerUp={stopMoveRepeat}
+                onPointerLeave={stopMoveRepeat}
+                onPointerCancel={stopMoveRepeat}
+              >
                 LEFT
               </Button>
-              <Button className="rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={() => move(1)}>
+              <Button
+                className="h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]"
+                onPointerDown={() => startMoveRepeat(1)}
+                onPointerUp={stopMoveRepeat}
+                onPointerLeave={stopMoveRepeat}
+                onPointerCancel={stopMoveRepeat}
+              >
                 RIGHT
               </Button>
-              <Button className="rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={stepDown}>
+              <Button className="h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={stepDown}>
                 DOWN
               </Button>
-              <Button className="rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={rotatePiece}>
+              <Button className="h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={rotatePiece}>
                 <RotateCw className="mr-2 h-4 w-4" />
                 ROTATE
               </Button>
-              <Button className="col-span-2 rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={hardDrop}>
+              <Button className="col-span-2 h-auto rounded-xl border-2 border-[#ffe08a] bg-[#5a3f8b] py-3 font-mono text-[#fff0b8] hover:bg-[#6b4d9f]" onClick={hardDrop}>
                 HARD DROP
               </Button>
-              <Button className="col-span-2 rounded-xl border-2 border-[#cbb8ff] bg-[#453067] font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={cycleVolume}>
+              <Button className="col-span-2 h-auto rounded-xl border-2 border-[#cbb8ff] bg-[#453067] py-3 font-mono text-[#f7f0ff] hover:bg-[#533c79]" onClick={cycleVolume}>
                 <VolumeIcon level={volume} />
                 VOL {volume}
               </Button>
