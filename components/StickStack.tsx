@@ -25,6 +25,8 @@ import {
 
 /** ボリューム 0〓3 を実際のゲイン値 (0.0〓1.0) に変換するテーブル */
 const VOLUME_GAINS: Record<number, number> = { 0: 0, 1: 0.33, 2: 0.66, 3: 1.0 };
+const MOBILE_ROWS = ROWS - 5;
+const MOBILE_QUERY = "(max-width: 767px)";
 
 function playLineClearSound(volumeLevel: number) {
   const gain0 = VOLUME_GAINS[volumeLevel] ?? 0;
@@ -102,7 +104,7 @@ function BoardView({
           const boardY = piece.y + y;
           const boardX = piece.x + x;
 
-          if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+          if (boardY >= 0 && boardY < board.length && boardX >= 0 && boardX < COLS) {
             next[boardY][boardX] = ACTIVE;
           }
         });
@@ -151,6 +153,7 @@ function BoardView({
 export default function StickStack() {
   const [board, setBoard] = useState(createBoard);
   const [piece, setPiece] = useState<Piece>(() => randomPiece());
+  const [rowCount, setRowCount] = useState(ROWS);
   const [running, setRunning] = useState(true);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
@@ -158,6 +161,7 @@ export default function StickStack() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const rowCountRef = useRef(ROWS);
   const moveRepeatDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moveRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const moveRef = useRef<(dx: number) => void>(() => {});
@@ -179,13 +183,13 @@ export default function StickStack() {
   }, []);
 
   const resetGame = useCallback(() => {
-    setBoard(createBoard());
+    setBoard(createBoard(rowCount));
     setPiece(randomPiece());
     setRunning(true);
     setGameOver(false);
     setScore(0);
     setLines(0);
-  }, []);
+  }, [rowCount]);
 
   const lockPiece = useCallback(() => {
     if (!piece) return;
@@ -374,6 +378,31 @@ export default function StickStack() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_QUERY);
+    const syncRows = () => {
+      const nextRows = mediaQuery.matches ? MOBILE_ROWS : ROWS;
+
+      if (rowCountRef.current === nextRows) return;
+
+      rowCountRef.current = nextRows;
+      setRowCount(nextRows);
+      setBoard(createBoard(nextRows));
+      setPiece(randomPiece());
+      setRunning(true);
+      setGameOver(false);
+      setScore(0);
+      setLines(0);
+    };
+
+    syncRows();
+    mediaQuery.addEventListener("change", syncRows);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncRows);
+    };
+  }, []);
 
   useEffect(() => {
     const board = boardRef.current;

@@ -22,8 +22,8 @@ export interface Piece {
 /**
  * 空のゲーム盤面を生成する。
  */
-export function createBoard() {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+export function createBoard(rows = ROWS) {
+  return Array.from({ length: rows }, () => Array(COLS).fill(EMPTY));
 }
 
 /**
@@ -66,7 +66,7 @@ export function collides(
       const boardX = nextX + x;
       const boardY = nextY + y;
 
-      if (boardX < 0 || boardX >= COLS || boardY >= ROWS) {
+      if (boardX < 0 || boardX >= COLS || boardY >= board.length) {
         return true;
       }
 
@@ -92,7 +92,7 @@ export function merge(board: number[][], piece: Piece) {
       const boardY = piece.y + y;
       const boardX = piece.x + x;
 
-      if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+      if (boardY >= 0 && boardY < board.length && boardX >= 0 && boardX < COLS) {
         next[boardY][boardX] = FILLED;
       }
     });
@@ -106,7 +106,7 @@ export function merge(board: number[][], piece: Piece) {
  */
 export function clearLines(board: number[][]) {
   const keptRows = board.filter((row) => row.some((cell) => cell === EMPTY));
-  const cleared = ROWS - keptRows.length;
+  const cleared = board.length - keptRows.length;
   const freshRows = Array.from({ length: cleared }, () => Array(COLS).fill(EMPTY));
 
   return {
