@@ -44,6 +44,26 @@ npm run dev
 
 ブラウザで `http://localhost:3000/stick-stack` を開くとゲームが表示されます。
 
+### トラブルシューティング
+
+`npm run dev` がうまく動作しない場合があります。
+
+根本原因は `Next.js package not found` で、Turbopack の HMR（Hot Module Replacement）システムが内部的にクラッシュしています。ただし `GET / 200` が継続して返っているので、ページ自体は正常に動作しています。FATAL ログが繰り返し出るものの、実害はありません。
+
+対処方法は2つあります：
+
+**1. キャッシュクリア（まずこれを試す）**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**2. Turbopack を無効化して webpack で起動**
+```bash
+npx next dev --no-turbopack
+```
+Next.js 16 の Turbopack はまだ不安定なので、安定性を優先するならこちら。`package.json` の `dev` スクリプトを書き換えてもいいです。
+
 ## テスト
 
 ### テストの実行
